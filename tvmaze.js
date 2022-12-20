@@ -14,35 +14,6 @@ const defaultImage = 'https://store-images.s-microsoft.com/image/apps.65316.1351
  *    (if no image URL given by API, put in a default image URL)
  */
 
-
-// ORIGINAL HARDCODE VERSION // Does not accept a term and returns hardcoded show data
-
-// async function getShowsByTerm( /* term */) {
-//   // ADD: Remove placeholder & make request to TVMaze search shows API.
-
-//   return [
-//     {
-//       id: 1767,
-//       name: "The Bletchley Circle",
-//       summary:
-//         `<p><b>The Bletchley Circle</b> follows the journey of four ordinary 
-//            women with extraordinary skills that helped to end World War II.</p>
-//          <p>Set in 1952, Susan, Millie, Lucy and Jean have returned to their 
-//            normal lives, modestly setting aside the part they played in 
-//            producing crucial intelligence, which helped the Allies to victory 
-//            and shortened the war. When Susan discovers a hidden code behind an
-//            unsolved murder she is met by skepticism from the police. She 
-//            quickly realises she can only begin to crack the murders and bring
-//            the culprit to justice with her former friends.</p>`,
-//       image:
-//           "http://static.tvmaze.com/uploads/images/medium_portrait/147/369403.jpg"
-//     }
-//   ]
-// }
-
-// ORIGINAL HARDCODE VERSION // Does not accept a term and returns hardcoded show data
-
-
 async function getShowsByTerm(term) {
 
   const res = await axios.get('https://api.tvmaze.com/search/shows', {params: {q: term}});
@@ -125,18 +96,18 @@ async function getEpisodesOfShow(id) {
   console.log(res.data);
   console.log(res.data.map(function(each){
     return {
-      id: each.id,
-      name: each.name,
-      season: each.season,
-      number: each.number,
+      id: each.id ? each.id : 'NO ID',
+      name: each.name ? each.name : 'NO NAME',
+      season: each.season ? each.season : 'ONLY 1 SEASON',
+      number: each.number ? each.number : 'NO NUMBER'
     };
   }))
   return (res.data.map(function(each){
     return {
-      id: each.id,
-      name: each.name,
-      season: each.season,
-      number: each.number,
+      id: each.id ? each.id : 'NO ID',
+      name: each.name ? each.name : 'NO NAME',
+      season: each.season ? each.season : 'ONLY 1 SEASON',
+      number: each.number ? each.number : 'NO NUMBER'
     };
   }))
 
@@ -146,65 +117,27 @@ async function getEpisodesOfShow(id) {
 
 function populateEpisodes(episodes) {
 
+  $episodesList.empty()
+
   for (let episode of episodes) {
-    const $episode = $(`<li>${episode.name} (${episode.season} : ${episode.number}) ID: ${episode.id} </li>`);
+    const $episode = $(`<li>(${episode.season} : ${episode.number}) ${episode.name} ID: ${episode.id} </li>`);
 
     console.log($episode);
 
     $episodesList.append($episode);  
   }
 
-  $episodesArea.toggle();
+  $episodesArea.show();
 
 }
 
+$($showsList).on("click", ".Show-getEpisodes", async function handleEpClick(e) {
+  console.log('click detected')
+  const showId = $(e.target).closest(".Show").data("show-id"); // Reference this line for "Ask Mikael" question below.
+  let episodes = await getEpisodesOfShow(showId);
+  populateEpisodes(episodes);
+})
 
+// Questions - Ask Mikael
 
-
-
-
-
-const testEpListHard = [
-  {
-      "id": 152950,
-      "name": "Cracking a Killer's Code, Part 1",
-      "season": 1,
-      "number": 1
-  },
-  {
-      "id": 152951,
-      "name": "Cracking a Killer's Code, Part 2",
-      "season": 1,
-      "number": 2
-  },
-  {
-      "id": 152952,
-      "name": "Cracking a Killer's Code, Part 3",
-      "season": 1,
-      "number": 3
-  },
-  {
-      "id": 152953,
-      "name": "Blood on Their Hands, Part 1",
-      "season": 2,
-      "number": 1
-  },
-  {
-      "id": 152954,
-      "name": "Blood on Their Hands, Part 2",
-      "season": 2,
-      "number": 2
-  },
-  {
-      "id": 152955,
-      "name": "Uncustomed Goods, Part 1",
-      "season": 2,
-      "number": 3
-  },
-  {
-      "id": 152956,
-      "name": "Uncustomed Goods, Part 2",
-      "season": 2,
-      "number": 4
-  }
-]
+// This approach relys on the DOM to reference data to handle the episodes event. Would a more robust approach be to hold the list of shows in memory and have the DOM elements reference that memory, so that one could not manipulate the DOM through the console and therefore change possible outcomes of functions. For instance, if someone manipulates the "show-id" in the DOM, then clicking on that show's Episodes button would yield a different-than-expected result. This use case is probably less of an issue than in the memory game application as this manipulation would only cheat the end user by returning incorrect values.
