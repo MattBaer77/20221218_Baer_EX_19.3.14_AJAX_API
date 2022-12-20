@@ -2,8 +2,10 @@
 
 const $showsList = $("#shows-list");
 const $episodesArea = $("#episodes-area");
+const $episodesList = $("#episodes-list");
 const $searchForm = $("#search-form");
 
+const defaultImage = 'https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300'
 
 /** Given a search term, search for tv shows that match that query.
  *
@@ -12,27 +14,52 @@ const $searchForm = $("#search-form");
  *    (if no image URL given by API, put in a default image URL)
  */
 
-async function getShowsByTerm( /* term */) {
-  // ADD: Remove placeholder & make request to TVMaze search shows API.
 
-  return [
-    {
-      id: 1767,
-      name: "The Bletchley Circle",
-      summary:
-        `<p><b>The Bletchley Circle</b> follows the journey of four ordinary 
-           women with extraordinary skills that helped to end World War II.</p>
-         <p>Set in 1952, Susan, Millie, Lucy and Jean have returned to their 
-           normal lives, modestly setting aside the part they played in 
-           producing crucial intelligence, which helped the Allies to victory 
-           and shortened the war. When Susan discovers a hidden code behind an
-           unsolved murder she is met by skepticism from the police. She 
-           quickly realises she can only begin to crack the murders and bring
-           the culprit to justice with her former friends.</p>`,
-      image:
-          "http://static.tvmaze.com/uploads/images/medium_portrait/147/369403.jpg"
-    }
-  ]
+// ORIGINAL HARDCODE VERSION // Does not accept a term and returns hardcoded show data
+
+// async function getShowsByTerm( /* term */) {
+//   // ADD: Remove placeholder & make request to TVMaze search shows API.
+
+//   return [
+//     {
+//       id: 1767,
+//       name: "The Bletchley Circle",
+//       summary:
+//         `<p><b>The Bletchley Circle</b> follows the journey of four ordinary 
+//            women with extraordinary skills that helped to end World War II.</p>
+//          <p>Set in 1952, Susan, Millie, Lucy and Jean have returned to their 
+//            normal lives, modestly setting aside the part they played in 
+//            producing crucial intelligence, which helped the Allies to victory 
+//            and shortened the war. When Susan discovers a hidden code behind an
+//            unsolved murder she is met by skepticism from the police. She 
+//            quickly realises she can only begin to crack the murders and bring
+//            the culprit to justice with her former friends.</p>`,
+//       image:
+//           "http://static.tvmaze.com/uploads/images/medium_portrait/147/369403.jpg"
+//     }
+//   ]
+// }
+
+// ORIGINAL HARDCODE VERSION // Does not accept a term and returns hardcoded show data
+
+
+async function getShowsByTerm(term) {
+
+  const res = await axios.get('https://api.tvmaze.com/search/shows', {params: {q: term}});
+  console.log(res);
+  console.log(res.data.map(function(each){return {
+    id: each.show.id? each.show.id : 'No ID Available',
+    name: each.show.name? each.show.name: 'No NAME Available',
+    summary: each.show.summary? each.show.summary : 'No SUMMARY Available',
+    image: each.show.image? each.show.image.medium : defaultImage
+  }}));
+  return res.data.map(function(each){return {
+    id: each.show.id? each.show.id : 'No ID Available',
+    name: each.show.name? each.show.name: 'No NAME Available',
+    summary: each.show.summary? each.show.summary : 'No SUMMARY Available',
+    image: each.show.image? each.show.image.medium : defaultImage
+  }});
+
 }
 
 
@@ -46,9 +73,9 @@ function populateShows(shows) {
         `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
            <img 
-              src="http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpg" 
+              src="${show.image}" 
               alt="Bletchly Circle San Francisco" 
-              class="w-25 mr-3">
+              class="w-25 mr-10">
            <div class="media-body">
              <h5 class="text-primary">${show.name}</h5>
              <div><small>${show.summary}</small></div>
@@ -60,7 +87,8 @@ function populateShows(shows) {
        </div>
       `);
 
-    $showsList.append($show);  }
+    $showsList.append($show);  
+  }
 }
 
 
@@ -69,7 +97,9 @@ function populateShows(shows) {
  */
 
 async function searchForShowAndDisplay() {
-  const term = $("#searchForm-term").val();
+  // const term = $("#searchForm-term").val(); // Origianl line which did not correctly function.
+  const term = $("#search-query").val();
+  console.log(term);
   const shows = await getShowsByTerm(term);
 
   $episodesArea.hide();
@@ -82,12 +112,99 @@ $searchForm.on("submit", async function (evt) {
 });
 
 
+// ADDING EPISODES
+
+
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
 
-// async function getEpisodesOfShow(id) { }
+async function getEpisodesOfShow(id) {
+
+  const res = await axios.get(`https://api.tvmaze.com/shows/${id}/episodes`);
+  console.log(res.data);
+  console.log(res.data.map(function(each){
+    return {
+      id: each.id,
+      name: each.name,
+      season: each.season,
+      number: each.number,
+    };
+  }))
+  return (res.data.map(function(each){
+    return {
+      id: each.id,
+      name: each.name,
+      season: each.season,
+      number: each.number,
+    };
+  }))
+
+}
 
 /** Write a clear docstring for this function... */
 
-// function populateEpisodes(episodes) { }
+function populateEpisodes(episodes) {
+
+  for (let episode of episodes) {
+    const $episode = $(`<li>${episode.name} (${episode.season} : ${episode.number}) ID: ${episode.id} </li>`);
+
+    console.log($episode);
+
+    $episodesList.append($episode);  
+  }
+
+  $episodesArea.toggle();
+
+}
+
+
+
+
+
+
+
+const testEpListHard = [
+  {
+      "id": 152950,
+      "name": "Cracking a Killer's Code, Part 1",
+      "season": 1,
+      "number": 1
+  },
+  {
+      "id": 152951,
+      "name": "Cracking a Killer's Code, Part 2",
+      "season": 1,
+      "number": 2
+  },
+  {
+      "id": 152952,
+      "name": "Cracking a Killer's Code, Part 3",
+      "season": 1,
+      "number": 3
+  },
+  {
+      "id": 152953,
+      "name": "Blood on Their Hands, Part 1",
+      "season": 2,
+      "number": 1
+  },
+  {
+      "id": 152954,
+      "name": "Blood on Their Hands, Part 2",
+      "season": 2,
+      "number": 2
+  },
+  {
+      "id": 152955,
+      "name": "Uncustomed Goods, Part 1",
+      "season": 2,
+      "number": 3
+  },
+  {
+      "id": 152956,
+      "name": "Uncustomed Goods, Part 2",
+      "season": 2,
+      "number": 4
+  }
+]
